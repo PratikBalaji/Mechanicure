@@ -76,6 +76,16 @@ export default function HomePage() {
 
     socket.onopen = () => {
       setError('');
+
+      const intakeRaw = localStorage.getItem('mechanicure_intake');
+      if (!intakeRaw) return;
+
+      try {
+        const parsedIntakeData = JSON.parse(intakeRaw);
+        socket.send(JSON.stringify({ type: 'init_context', data: parsedIntakeData }));
+      } catch (err) {
+        console.error('Failed to parse intake context:', err);
+      }
     };
 
     socket.onmessage = (event) => {
