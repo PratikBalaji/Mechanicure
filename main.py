@@ -1,9 +1,19 @@
 import asyncio
 import json
+import sys
+import site
 
 import httpx
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
+
+try:
+    from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+    from fastapi.middleware.cors import CORSMiddleware
+except ImportError:
+    raise ImportError(
+        f"Could not find import of 'fastapi', looked at search roots ({sys.path}) and site package path ({site.getsitepackages()}).\n"
+        f"Current Python Executable: {sys.executable}\n"
+        "Please ensure it is installed using: pip install fastapi uvicorn httpx"
+    ) from None
 
 app = FastAPI(title="Mechanicure Real-Time Diagnostic API")
 

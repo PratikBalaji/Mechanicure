@@ -26,7 +26,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [diagnosis, setDiagnosis] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [telemetryBurst, setTelemetryBurst] = useState(() => Array.from({ length: 9 }, () => randomHex()));
+  const [telemetryBurst, setTelemetryBurst] = useState<string[]>([]);
 
   useEffect(() => {
     const initCamera = async () => {
@@ -181,6 +181,8 @@ export default function HomePage() {
   }, [cameraReady]);
 
   useEffect(() => {
+    setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
+
     const telemetryInterval = window.setInterval(() => {
       setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
     }, 900);
