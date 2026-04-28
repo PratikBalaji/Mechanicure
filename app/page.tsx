@@ -55,7 +55,7 @@ type DiagnoseResponse = {
 
 const TOTAL_STEPS = 5;
 const CAPTURE_INTERVAL_MS = 5000;
-const WS_URL = 'ws://127.0.0.1:8000/ws/diagnose';
+const WS_URL = 'ws://localhost:8000/ws/diagnose';
 
 const COLOR_OPTIONS = [
   { name: 'Black', className: 'bg-zinc-900' },
