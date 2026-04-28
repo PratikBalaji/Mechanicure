@@ -26,6 +26,37 @@ app.add_middleware(
 )
 
 
+
+
+@app.get("/api/mechanics")
+async def get_mechanics(lat: float | None = None, lng: float | None = None, diagnosis: str | None = None):
+    return [
+        {
+            "name": "Meineke Car Care Center",
+            "rating": 4.6,
+            "distance": "1.2 miles",
+            "estimatedCost": "$120 - $180",
+            "phone": "+1-555-0142",
+            "email": "service@meineke-local.example",
+        },
+        {
+            "name": "Mavis Discount Tire",
+            "rating": 4.4,
+            "distance": "2.0 miles",
+            "estimatedCost": "$95 - $160",
+            "phone": "+1-555-0188",
+            "email": "quotes@mavis-local.example",
+        },
+        {
+            "name": "Precision Auto Diagnostics",
+            "rating": 4.9,
+            "distance": "0.9 miles",
+            "estimatedCost": "$140 - $210",
+            "phone": "+1-555-0116",
+            "email": "hello@precisionautodiag.example",
+        },
+    ]
+
 @app.websocket("/ws/diagnose")
 async def websocket_diagnose(websocket: WebSocket):
     await websocket.accept()
@@ -80,13 +111,26 @@ async def websocket_diagnose(websocket: WebSocket):
                 "- Component Identified: Serpentine belt and tensioner assembly.\n"
                 f"- Reported Symptom: {symptom}.\n"
                 f"- Active NHTSA Recalls Found: {recalls_count}.\n"
+                "- Acoustic Telemetry: High-frequency friction detected.\n"
                 "- Status: Scanning continuous telemetry... minor wear detected."
             )
 
             # Stream the result back to the frontend instantly
             await websocket.send_json({
                 "status": "success",
-                "diagnosis": mocked_diagnosis
+                "diagnosis": mocked_diagnosis,
+                "detections": [
+                    {
+                        "label": "Serpentine Belt",
+                        "confidence": 0.94,
+                        "box": {"x": 150, "y": 200, "w": 280, "h": 120}
+                    }
+                ],
+                "acoustic": {
+                    "frequency": "4.2 kHz",
+                    "status": "ANOMALY DETECTED",
+                    "signature": "High-pitch belt squeal"
+                }
             })
 
     except WebSocketDisconnect:
