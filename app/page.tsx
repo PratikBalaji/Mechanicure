@@ -58,7 +58,6 @@ const viewMotion = {
   exit: { opacity: 0, y: -12 },
   transition: { duration: 0.3, ease: 'easeInOut' as const },
 };
-
 const randomHex = () =>
   Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
 
@@ -425,7 +424,7 @@ function ScannerView({ intakeData, onBack }: { intakeData: IntakeData; onBack: (
   const [loading, setLoading] = useState(false);
   const [diagnosis, setDiagnosis] = useState<string>('');
   const [error, setError] = useState<string>('');
-  const [telemetryBurst, setTelemetryBurst] = useState(() => Array.from({ length: 9 }, () => randomHex()));
+  const [telemetryBurst, setTelemetryBurst] = useState<string[]>([]);
 
   useEffect(() => {
     const initCamera = async () => {
@@ -571,6 +570,8 @@ function ScannerView({ intakeData, onBack }: { intakeData: IntakeData; onBack: (
   }, [cameraReady]);
 
   useEffect(() => {
+    setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
+
     const telemetryInterval = window.setInterval(() => {
       setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
     }, 900);
