@@ -118,6 +118,11 @@ export default function HomePage() {
   const saveIntake = async (launchScanner = true) => {
     setIsSaving(true);
 
+    // Launch the scanner immediately — don't block on the DB save
+    if (launchScanner) {
+      setAppView('scanner');
+    }
+
     try {
       const response = await fetch('/api/intake', {
         method: 'POST',
@@ -128,14 +133,10 @@ export default function HomePage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save intake data.');
-      }
-
-      if (launchScanner) {
-        setAppView('scanner');
+        console.warn('Intake save returned non-OK status, but scanner launched.');
       }
     } catch (error) {
-      console.error(error);
+      console.error('Intake save failed (non-blocking):', error);
     } finally {
       setIsSaving(false);
     }
@@ -480,7 +481,7 @@ function ScannerView({ intakeData, onBack }: { intakeData: IntakeData; onBack: (
   const [detections, setDetections] = useState<Detection[]>([]);
   const [acousticData, setAcousticData] = useState<AcousticTelemetry | null>(null);
   const [mechanics, setMechanics] = useState<MechanicPartner[]>([]);
-  const [telemetryBurst, setTelemetryBurst] = useState(() => Array.from({ length: 9 }, () => randomHex()));
+  const [telemetryBurst, setTelemetryBurst] = useState<string[]>([]);
 
   const fetchMechanics = async (lat: number, lng: number, diagnosisText: string) => {
     try {
@@ -663,6 +664,8 @@ function ScannerView({ intakeData, onBack }: { intakeData: IntakeData; onBack: (
   }, [cameraReady]);
 
   useEffect(() => {
+    setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
+
     const telemetryInterval = window.setInterval(() => {
       setTelemetryBurst(Array.from({ length: 9 }, () => randomHex()));
     }, 900);

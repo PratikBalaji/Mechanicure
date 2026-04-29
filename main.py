@@ -93,21 +93,23 @@ async def websocket_diagnose(websocket: WebSocket):
                         symptom = str(data.get("symptom") or symptom)
                         
                         # Fetch recalls
-                        if vehicle_make != "Unknown Make" and vehicle_model != "Unknown Model":
+                        if vehicle_make != "Unknown Make" and vehicle_model != "Unknown Model" and vehicle_year != "Unknown Year":
                             try:
                                 recalls_url = (
                                     "https://api.nhtsa.gov/recalls/recallsByVehicle"
                                     f"?make={vehicle_make}&model={vehicle_model}&modelYear={vehicle_year}"
                                 )
-                                async with httpx.AsyncClient(timeout=5.0) as client:
+                                async with httpx.AsyncClient(timeout=10.0) as client:
                                     response = await client.get(recalls_url)
                                     if response.status_code == 200:
                                         recalls_payload = response.json()
                                         recalls_results = recalls_payload.get("results", [])
                                         if isinstance(recalls_results, list):
                                             recalls_count = len(recalls_results)
-                            except Exception as e:
-                                print(f"Failed to fetch recalls: {e}")
+                                    else:
+                                        print(f"NHTSA API warning: {response.status_code}")
+                            except Exception as api_err:
+                                print(f"NHTSA API failed, continuing without recalls: {api_err}")
                 except json.JSONDecodeError:
                     print("Failed to parse JSON text message.")
                     
