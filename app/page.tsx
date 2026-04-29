@@ -1,5 +1,7 @@
 'use client';
 
+import { Canvas } from '@react-three/fiber';
+import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Box, CarFront, Cog, DollarSign, Download, Droplets, Gauge, Layers, Mail, MapPin, Phone, Printer, ScanSearch, ShieldCheck, Sofa, Star, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -72,6 +74,28 @@ const FOCUS_OPTIONS: { label: Exclude<FocusArea, ''>; icon: typeof Wrench }[] = 
   { label: 'Interior', icon: Sofa },
   { label: 'Exterior', icon: ScanSearch },
 ];
+
+const getColorHex = (colorName: string) => {
+  switch (colorName) {
+    case 'Red': return '#ef4444';
+    case 'Blue': return '#3b82f6';
+    case 'Black': return '#18181b';
+    case 'White': return '#f8fafc';
+    case 'Silver': return '#94a3b8';
+    case 'Gray': return '#475569';
+    default: return '#ffffff';
+  }
+};
+
+function CarModel({ color }: { color: string }) {
+  const { scene } = useGLTF('/suv_model.glb');
+  useEffect(() => {
+    scene.traverse((child: any) => {
+      if (child.isMesh) child.material.color.set(getColorHex(color));
+    });
+  }, [color, scene]);
+  return <primitive object={scene} />;
+}
 
 const stepMotion = {
   initial: { opacity: 0, x: 40 },
@@ -997,6 +1021,29 @@ endsolid mechanicure_mock_part`;
                         </div>
                       </div>
                     ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {!loading && diagnosis && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: 'easeOut', delay: 0.1 }}
+                  className="rounded-md border border-cyan-300/35 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md md:p-5"
+                >
+                  <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-cyan-200/90">
+                    <Cog className="h-4 w-4" />
+                    <span>Interactive Digital Twin</span>
+                  </div>
+                  <div className="h-64 w-full overflow-hidden rounded-lg border border-white/10 bg-slate-950/60">
+                    <Canvas camera={{ position: [2.8, 1.4, 3.2], fov: 45 }}>
+                      <ambientLight intensity={0.9} />
+                      <Environment preset="city" />
+                      <OrbitControls autoRotate autoRotateSpeed={1.2} enablePan={false} />
+                      <CarModel color={intakeData.color} />
+                      <ContactShadows position={[0, -1.1, 0]} opacity={0.35} blur={2.5} scale={8} far={3.5} />
+                    </Canvas>
                   </div>
                 </motion.div>
               )}
