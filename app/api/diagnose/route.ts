@@ -94,8 +94,8 @@ export async function POST(request: Request) {
 
     const bytes = new Uint8Array(await file.arrayBuffer());
     const base64Image = Buffer.from(bytes).toString('base64');
-
     const systemPrompt = `You are an expert mechanic. Analyze this image of a ${vehicleYear} ${vehicleMake} ${vehicleModel}. The user's symptom is ${symptom}. Identify the primary automotive component in view. Return ONLY a valid JSON object matching this exact structure: { "diagnosis": "Brief string analyzing the part's condition", "detections": [ { "label": "Part Name", "confidence": 0.95, "box": { "x": 150, "y": 150, "w": 200, "h": 200 } } ] } `;
+main
 
     const geminiResult = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
