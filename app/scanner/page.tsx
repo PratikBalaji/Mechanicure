@@ -9,7 +9,7 @@ type DiagnoseResponse = {
 };
 
 const CAPTURE_INTERVAL_MS = 5000;
-const WS_URL = 'ws://127.0.0.1:8000/ws/diagnose';
+const WS_URL = 'ws://localhost:8000/ws/diagnose';
 
 const randomHex = () =>
   Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16).toUpperCase()).join('');
