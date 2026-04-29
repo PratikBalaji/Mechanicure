@@ -1,8 +1,8 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei';
-import { useEffect } from 'react';
+import { Bounds, ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei';
+import { Suspense, useEffect } from 'react';
 
 const getColorHex = (colorName: string) => {
   switch (colorName) {
@@ -38,5 +38,17 @@ function CarModel({ color }: { color: string }) {
 }
 
 export default function DigitalTwin({ color }: { color: string }) {
-  return <Canvas camera={{ position: [2.8, 1.4, 3.2], fov: 45 }}><ambientLight intensity={0.9} /><Environment preset="city" /><OrbitControls autoRotate autoRotateSpeed={1.2} enablePan={false} /><CarModel color={color} /><ContactShadows position={[0, -1.1, 0]} opacity={0.35} blur={2.5} scale={8} far={3.5} /></Canvas>;
+  return (
+    <Canvas camera={{ position: [4, 2, 5], fov: 45 }}>
+      <ambientLight intensity={0.9} />
+      <Environment preset="city" />
+      <OrbitControls autoRotate autoRotateSpeed={1.2} enablePan={false} />
+      <Suspense fallback={null}>
+        <Bounds fit clip observe margin={1.2}>
+          <CarModel color={color} />
+        </Bounds>
+      </Suspense>
+      <ContactShadows position={[0, -1.1, 0]} opacity={0.35} blur={2.5} scale={8} far={3.5} />
+    </Canvas>
+  );
 }

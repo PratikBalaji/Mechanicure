@@ -1,9 +1,11 @@
 'use client';
 
-import { Canvas } from '@react-three/fiber';
-import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei';
+import dynamic from 'next/dynamic';
+
+const DigitalTwin = dynamic(() => import('../components/DigitalTwin'), { ssr: false });
+const CadViewer = dynamic(() => import('../components/CadViewer'), { ssr: false });
 import { AnimatePresence, motion } from 'framer-motion';
-import { Box, CarFront, Cog, DollarSign, Download, Droplets, Gauge, Layers, Mail, MapPin, Phone, Printer, ScanSearch, ShieldCheck, Sofa, Star, Wrench } from 'lucide-react';
+import { Box, CarFront, ChevronDown, ChevronUp, Cog, DollarSign, Download, Droplets, Gauge, Layers, Mail, MapPin, Phone, Printer, ScanSearch, ShieldCheck, Sofa, Star, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type AppView = 'landing' | 'intake' | 'scanner';
@@ -75,27 +77,7 @@ const FOCUS_OPTIONS: { label: Exclude<FocusArea, ''>; icon: typeof Wrench }[] = 
   { label: 'Exterior', icon: ScanSearch },
 ];
 
-const getColorHex = (colorName: string) => {
-  switch (colorName) {
-    case 'Red': return '#ef4444';
-    case 'Blue': return '#3b82f6';
-    case 'Black': return '#18181b';
-    case 'White': return '#f8fafc';
-    case 'Silver': return '#94a3b8';
-    case 'Gray': return '#475569';
-    default: return '#ffffff';
-  }
-};
 
-function CarModel({ color }: { color: string }) {
-  const { scene } = useGLTF('/suv_model.glb');
-  useEffect(() => {
-    scene.traverse((child: any) => {
-      if (child.isMesh) child.material.color.set(getColorHex(color));
-    });
-  }, [color, scene]);
-  return <primitive object={scene} />;
-}
 
 const stepMotion = {
   initial: { opacity: 0, x: 40 },
@@ -504,6 +486,10 @@ function ScannerView({ intakeData, onBack }: { intakeData: IntakeData; onBack: (
   const [acousticData, setAcousticData] = useState<AcousticTelemetry | null>(null);
   const [mechanics, setMechanics] = useState<MechanicPartner[]>([]);
   const [telemetryBurst, setTelemetryBurst] = useState<string[]>([]);
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  const stlFiles = ['/cad/spark_plug.stl', '/cad/brake_pad.stl', '/cad/serpentine_belt.stl'];
+  const currentStl = diagnosis ? stlFiles[diagnosis.length % 3] : stlFiles[0];
 
   const fetchMechanics = async (lat: number, lng: number, diagnosisText: string) => {
     try {
@@ -793,6 +779,38 @@ endsolid mechanicure_mock_part`;
         Back to Intake
       </button>
 
+      <button
+        type="button"
+        onClick={() => {
+          setDiagnosis(
+            "Diagnostic Report:\n" +
+            `- Vehicle Profile Match: ${intakeData.year} ${intakeData.make} ${intakeData.model}.\n` +
+            "- Component Identified: Serpentine belt and tensioner assembly.\n" +
+            `- Reported Symptom: ${intakeData.symptom || 'General inspection'}.\n` +
+            "- Active NHTSA Recalls Found: 2.\n" +
+            "- Acoustic Telemetry: High-frequency friction detected.\n" +
+            "- Status: Minor wear detected — recommend replacement within 5,000 miles."
+          );
+          setDetections([
+            { label: 'Serpentine Belt', confidence: 0.94, box: { x: 150, y: 200, w: 280, h: 120 } },
+            { label: 'Tensioner Pulley', confidence: 0.87, box: { x: 420, y: 180, w: 140, h: 100 } },
+          ]);
+          setAcousticData({
+            frequency: '4.2 kHz',
+            status: 'ANOMALY DETECTED',
+            signature: 'High-pitch belt squeal',
+          });
+          setMechanics([
+            { name: 'Meineke Car Care Center', rating: 4.6, distance: '1.2 miles', estimatedCost: '$120 - $180', phone: '+1-555-0142', email: 'service@meineke-local.example' },
+            { name: 'Precision Auto Diagnostics', rating: 4.9, distance: '0.9 miles', estimatedCost: '$140 - $210', phone: '+1-555-0116', email: 'hello@precisionautodiag.example' },
+          ]);
+          setLoading(false);
+          setError('');
+        }}
+        className="absolute left-4 top-14 z-40 rounded-md border border-emerald-300/40 bg-emerald-500/20 px-4 py-2 text-xs uppercase tracking-[0.16em] text-emerald-100 backdrop-blur-md transition hover:bg-emerald-500/35"
+      >
+        ⚡ Skip for Demo
+      </button>
 
       <div className="absolute left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-4 rounded-md border border-cyan-300/35 bg-slate-900/65 px-4 py-3 text-xs backdrop-blur-md">
         <div className="flex items-end gap-1">
@@ -875,11 +893,16 @@ endsolid mechanicure_mock_part`;
           </div>
 
           {(loading || diagnosis || error) && (
-            <div className="absolute bottom-5 left-5 right-5 z-30 space-y-3">
+            <div className="absolute bottom-24 left-4 right-4 z-30 flex max-h-[65vh] flex-col gap-3 overflow-y-auto pb-2 pr-1 [&::-webkit-scrollbar]:hidden">
               <div className="rounded-md border border-cyan-300/45 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(16,185,129,0.2)] backdrop-blur-md md:p-5 md:text-base">
                 <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">
                   <span>DIAGNOSTIC FEED</span>
-                  <span className="text-emerald-300">CHANNEL // PRIMARY</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-emerald-300">CHANNEL // PRIMARY</span>
+                    <button onClick={() => setIsMinimized(!isMinimized)} className="rounded-full bg-cyan-500/20 p-1 text-cyan-200 transition hover:bg-cyan-500/40">
+                      {isMinimized ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
 
                 {loading && (
@@ -898,152 +921,152 @@ endsolid mechanicure_mock_part`;
                 {!loading && error && <p className="text-rose-300">{error}</p>}
               </div>
 
-              {!loading && diagnosis && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: 'easeOut' }}
-                  className="rounded-md border border-teal-300/45 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(45,212,191,0.18)] backdrop-blur-md md:p-5"
-                >
-                  <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-teal-200/90">
-                    <Box className="h-4 w-4" />
-                    <span>Replacement Part Synthesized</span>
-                  </div>
+              {!loading && diagnosis && !isMinimized && (
+                <>
 
-                  <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                    <div className="rounded-md border border-cyan-300/30 bg-slate-950/55 p-3">
-                      <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-cyan-200/90">
-                        <Layers className="h-4 w-4" />
-                        Recommended Materials
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {mfgData.materials.map((material) => (
-                          <span
-                            key={material}
-                            className="rounded-full border border-cyan-300/45 bg-cyan-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-cyan-100"
-                          >
-                            {material}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="rounded-md border border-teal-300/30 bg-slate-950/55 p-3">
-                      <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-teal-200/90">
-                        <ShieldCheck className="h-4 w-4" />
-                        Durability Stats
-                      </div>
-                      <div className="space-y-1 font-mono text-[11px]">
-                        <p className="text-slate-300">Tensile Strength: <span className="text-cyan-200">{mfgData.durability.tensileStrength}</span></p>
-                        <p className="text-slate-300">Heat Deflection: <span className="text-cyan-200">{mfgData.durability.heatDeflection}</span></p>
-                        <p className="text-slate-300">Lifespan: <span className="text-cyan-200">{mfgData.durability.lifespan}</span></p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-md border border-emerald-300/35 bg-slate-950/55 p-3">
-                      <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-emerald-200/90">
-                        <DollarSign className="h-4 w-4" />
-                        Estimated Production Quote
-                      </div>
-                      <p className="text-3xl font-semibold text-emerald-300 drop-shadow-[0_0_10px_rgba(74,222,128,0.65)]">{mfgData.quote}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={generateMockSTL}
-                      className="inline-flex items-center gap-2 rounded-md border border-cyan-300/45 bg-cyan-500/15 px-4 py-2 text-xs uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-500/25"
-                    >
-                      <Download className="h-4 w-4" />
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    className="rounded-md border border-teal-300/45 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(45,212,191,0.18)] backdrop-blur-md md:p-5"
+                  >
+                    <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-teal-200/90">
                       <Box className="h-4 w-4" />
-                      Download .STL File
-                    </button>
+                      <span>Replacement Part Synthesized</span>
+                    </div>
 
-                    <a
-                      href="https://www.shapeways.com/create"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-2 rounded-md border border-teal-300/45 bg-teal-500/15 px-4 py-2 text-xs uppercase tracking-[0.14em] text-teal-100 transition hover:bg-teal-500/25"
-                    >
-                      <Printer className="h-4 w-4" />
-                      Outsource 3D Print
-                    </a>
-                  </div>
-                </motion.div>
-              )}
+                    <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                      <div className="space-y-3">
+                        <div className="h-48 w-full overflow-hidden rounded-md border border-cyan-300/20 bg-slate-950/80">
+                          <CadViewer url={currentStl} />
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                          <a
+                            href={currentStl}
+                            download
+                            className="inline-flex items-center gap-2 rounded-md border border-cyan-300/45 bg-cyan-500/15 px-4 py-2 text-xs uppercase tracking-[0.14em] text-cyan-100 transition hover:bg-cyan-500/25"
+                          >
+                            <Download className="h-4 w-4" />
+                            <Box className="h-4 w-4" />
+                            Download .STL
+                          </a>
+                          <a
+                            href="https://www.shapeways.com/create"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-md border border-teal-300/45 bg-teal-500/15 px-4 py-2 text-xs uppercase tracking-[0.14em] text-teal-100 transition hover:bg-teal-500/25"
+                          >
+                            <Printer className="h-4 w-4" />
+                            Outsource 3D Print
+                          </a>
+                        </div>
+                      </div>
 
-
-              {!loading && diagnosis && mechanics.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
-                  className="rounded-md border border-cyan-300/35 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md md:p-5"
-                >
-                  <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-cyan-200/90">
-                    <MapPin className="h-4 w-4" />
-                    <span>Local Repair Partners</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    {mechanics.map((shop) => (
-                      <div
-                        key={shop.name}
-                        className="flex flex-col gap-2 rounded-md border border-white/10 bg-slate-950/55 p-3 md:flex-row md:items-center md:justify-between"
-                      >
-                        <div>
-                          <p className="font-medium text-cyan-100">{shop.name}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-300">
-                            <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-300" /> {shop.rating}</span>
-                            <span>{shop.distance}</span>
-                            <span className="text-emerald-300 drop-shadow-[0_0_8px_rgba(74,222,128,0.45)]">{shop.estimatedCost}</span>
+                      <div className="space-y-3">
+                        <div className="rounded-md border border-cyan-300/30 bg-slate-950/55 p-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-cyan-200/90">
+                            <Layers className="h-4 w-4" />
+                            Recommended Materials
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {mfgData.materials.map((material) => (
+                              <span
+                                key={material}
+                                className="rounded-full border border-cyan-300/45 bg-cyan-500/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.12em] text-cyan-100"
+                              >
+                                {material}
+                              </span>
+                            ))}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`tel:${shop.phone}`}
-                            className="inline-flex items-center gap-1 rounded-md border border-cyan-300/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs text-cyan-100 transition hover:bg-cyan-500/20"
-                          >
-                            <Phone className="h-3.5 w-3.5" />
-                            Call
-                          </a>
-                          <a
-                            href={`mailto:${shop.email}?subject=Quote Request`}
-                            className="inline-flex items-center gap-1 rounded-md border border-teal-300/40 bg-teal-500/10 px-2.5 py-1.5 text-xs text-teal-100 transition hover:bg-teal-500/20"
-                          >
-                            <Mail className="h-3.5 w-3.5" />
-                            Email Quote
-                          </a>
+                        <div className="rounded-md border border-teal-300/30 bg-slate-950/55 p-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-teal-200/90">
+                            <ShieldCheck className="h-4 w-4" />
+                            Durability Stats
+                          </div>
+                          <div className="space-y-1 font-mono text-[11px]">
+                            <p className="text-slate-300">Tensile Strength: <span className="text-cyan-200">{mfgData.durability.tensileStrength}</span></p>
+                            <p className="text-slate-300">Heat Deflection: <span className="text-cyan-200">{mfgData.durability.heatDeflection}</span></p>
+                            <p className="text-slate-300">Lifespan: <span className="text-cyan-200">{mfgData.durability.lifespan}</span></p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border border-emerald-300/35 bg-slate-950/55 p-3">
+                          <div className="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-emerald-200/90">
+                            <DollarSign className="h-4 w-4" />
+                            Estimated Production Quote
+                          </div>
+                          <p className="text-3xl font-semibold text-emerald-300 drop-shadow-[0_0_10px_rgba(74,222,128,0.65)]">{mfgData.quote}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
+                    </div>
+                  </motion.div>
 
-              {!loading && diagnosis && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, ease: 'easeOut', delay: 0.1 }}
-                  className="rounded-md border border-cyan-300/35 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md md:p-5"
-                >
-                  <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-cyan-200/90">
-                    <Cog className="h-4 w-4" />
-                    <span>Interactive Digital Twin</span>
-                  </div>
-                  <div className="h-64 w-full overflow-hidden rounded-lg border border-white/10 bg-slate-950/60">
-                    <Canvas camera={{ position: [2.8, 1.4, 3.2], fov: 45 }}>
-                      <ambientLight intensity={0.9} />
-                      <Environment preset="city" />
-                      <OrbitControls autoRotate autoRotateSpeed={1.2} enablePan={false} />
-                      <CarModel color={intakeData.color} />
-                      <ContactShadows position={[0, -1.1, 0]} opacity={0.35} blur={2.5} scale={8} far={3.5} />
-                    </Canvas>
-                  </div>
-                </motion.div>
+                  {mechanics.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.05 }}
+                      className="rounded-md border border-cyan-300/35 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md md:p-5"
+                    >
+                      <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-cyan-200/90">
+                        <MapPin className="h-4 w-4" />
+                        <span>Local Repair Partners</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        {mechanics.map((shop) => (
+                          <div
+                            key={shop.name}
+                            className="flex flex-col gap-2 rounded-md border border-white/10 bg-slate-950/55 p-3 md:flex-row md:items-center md:justify-between"
+                          >
+                            <div>
+                              <p className="font-medium text-cyan-100">{shop.name}</p>
+                              <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-slate-300">
+                                <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-300" /> {shop.rating}</span>
+                                <span>{shop.distance}</span>
+                                <span className="text-emerald-300 drop-shadow-[0_0_8px_rgba(74,222,128,0.45)]">{shop.estimatedCost}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={`tel:${shop.phone}`}
+                                className="inline-flex items-center gap-1 rounded-md border border-cyan-300/40 bg-cyan-500/10 px-2.5 py-1.5 text-xs text-cyan-100 transition hover:bg-cyan-500/20"
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                                Call
+                              </a>
+                              <a
+                                href={`mailto:${shop.email}?subject=Quote Request`}
+                                className="inline-flex items-center gap-1 rounded-md border border-teal-300/40 bg-teal-500/10 px-2.5 py-1.5 text-xs text-teal-100 transition hover:bg-teal-500/20"
+                              >
+                                <Mail className="h-3.5 w-3.5" />
+                                Email Quote
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, ease: 'easeOut', delay: 0.1 }}
+                    className="rounded-md border border-cyan-300/35 bg-slate-900/70 p-4 text-sm text-cyan-100 shadow-[0_0_40px_rgba(34,211,238,0.12)] backdrop-blur-md md:p-5"
+                  >
+                    <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-cyan-200/90">
+                      <Cog className="h-4 w-4" />
+                      <span>Interactive Digital Twin</span>
+                    </div>
+                    <div className="h-64 w-full overflow-hidden rounded-lg border border-white/10 bg-slate-950/60">
+                      <DigitalTwin color={intakeData.color} />
+                    </div>
+                  </motion.div>
+                </>
               )}
             </div>
           )}
