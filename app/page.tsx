@@ -3,8 +3,7 @@
 import { Canvas } from '@react-three/fiber';
 import { ContactShadows, Environment, OrbitControls, useGLTF } from '@react-three/drei';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Box, CarFront, CircleCheck, Cog, DollarSign, Download, Droplets, Gauge, Layers, Mail, MapPin, Phone, Printer, ScanSearch, ShieldCheck, Sofa, Star, SwitchCamera, Wrench, Zap } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import { Box, CarFront, Cog, DollarSign, Download, Droplets, Gauge, Layers, Mail, MapPin, Phone, Printer, ScanSearch, ShieldCheck, Sofa, Star, Wrench } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type AppView = 'landing' | 'intake' | 'scanner';
@@ -173,15 +172,13 @@ export default function HomePage() {
         {appView === 'landing' && (
           <motion.section key="landing" {...viewMotion} className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-10 lg:px-10">
             <header className="mb-16 flex items-center justify-between">
-              <div className="inline-flex items-center gap-4 rounded-2xl border border-cyan-400/30 bg-slate-900/70 px-5 py-3 backdrop-blur-xl">
-                <div className="relative h-10 w-10">
-                  <div className="absolute left-1/2 top-1/2 h-8 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.9)]" />
-                  <div className="absolute left-1/2 top-1/2 h-1.5 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal-300 shadow-[0_0_12px_rgba(45,212,191,0.8)]" />
-                  <div className="absolute right-0 top-1/2 h-7 w-7 -translate-y-1/2 rounded-full border-[3px] border-cyan-200/90 border-l-transparent shadow-[0_0_14px_rgba(34,211,238,0.6)]" />
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-slate-900/70 px-5 py-3 backdrop-blur-xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-400/15 shadow-[0_0_18px_rgba(34,211,238,0.4)] ring-1 ring-cyan-400/40">
+                  <Wrench className="h-5 w-5 text-cyan-300" strokeWidth={2} />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-cyan-300/85">Mechanicure</p>
-                  <p className="text-sm text-teal-100/90">Enterprise AR Diagnostics</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Mechanicure</p>
+                  <p className="text-xs text-slate-400">Enterprise AR Diagnostics</p>
                 </div>
               </div>
             </header>
